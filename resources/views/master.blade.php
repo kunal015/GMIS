@@ -104,7 +104,7 @@ body {
 }
 #page-container {
   position: relative;
-  min-height: 100vh;
+  min-height: 92.5vh;
 }
 .sidenav.active .a{
     background: #e2e8ed;
