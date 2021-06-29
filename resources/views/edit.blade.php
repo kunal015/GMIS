@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sign-Up Form</title>
+<style>
+.container {
+  padding: 16px;
+}
+input[type=text], input[type=password] {
+  width: 100%;
+  padding: 15px;
+  margin: 5px 0 22px 0;
+  display: inline-block;
+  border: none;
+  background: #f1f1f1;
+}
+	input[type=date]{
+		  width: 7%;
+		  padding: 15px;
+		  margin: 5px 0 22px 0;
+		  display: inline-block;
+		  border: none;
+		  background: #f1f1f1;
+	}
+	input [type=radio]{
+  		padding: 5px;
+  		margin: 5px 0 22px 0;
+  		display: inline-block;
+  		border: none;
+  		background: #f1f1f1;
+	}
+
+	input[type=text]:focus, input[type=password]:focus, input[type=date] {
+  background-color: #ddd;
+  outline: none;
+}
+hr {
+  border: 1px solid #f1f1f1;
+  margin-bottom: 25px;
+}
+.registerbtn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 16px 20px;
+  margin: 8px 0;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  opacity: 0.9;
+}
+
+.registerbtn:hover {
+  opacity:1;
+}
+a {
+  color: dodgerblue;
+}
+.showme {
+  display: none;
+}
+
+.showhim:hover .showme {
+  display: block;
+  font-color:orange;
+}
+.signin {
+  background-color: #f1f1f1;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+@extends('master')
+@section('content')
+<div class="container">
+    <div class="form-group col-12 p-0">
+            <div>
+                @if(Session::has('success'))
+                <div class="alert alert-success">
+                    {{Session::get('success')}}
+                </div>
+                @endif
+            </div>
+	    <form name="frm"  action="/edit" method="POST">
+        @csrf
+	    <div class="container">
+		    <h1>Register</h1>
+            <p>Please fill in this form to create an account.</p>
+            <hr>
+            <input type="hidden" name="id" value="{{$data['id']}}}">
+            <label for="name"><b>Full Name</b></label>
+            <input type="text" placeholder="Enter Your Full Name" name="name" value="{{$data['name']}}" required>
+            <span class="text-danger">@error('name') {{ $message }}@enderror</span>
+            <label for="email"><b>Email</b></label>
+            <input type="text" placeholder="Enter Email" name="email" value="{{$data['email']}}"  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Invalid Email Address" required>
+            <span class="text-danger">@error('email') {{ $message }}@enderror</span>
+            <br/><br/>
+            <label for="role"><b>Select The Role</b></label><br/>
+            @foreach( $roles as $role)
+                <input type="radio" id="editor" name="role" value="{{$role['name']}}" required <?php if($data['role']==$role['name']){ echo "checked";}?>/>
+                <label for="{{$role['name']}}">{{$role['name']}}</label><br/>
+            @endforeach
+            <br><br>
+            <br><br>
+            <label for="Description"><b>Description</b></label><br>
+            <textarea rows = "5" cols = "50" name = "desc" placeholder="Type Your Desription">{{$data['desc']}}</textarea>
+            <hr>
+            <p><input type="checkbox" required> By updating an account you agree to our <a href="#">Terms & Privacy</a>.Please click on the checkbox if you agree</p>
+            <Button class="btn btn-success" style="width:80px;" type="submit">Update</Button>
+        </div>
+        </form>
+  </div>
+</div>
+@endsection('content')
+</body>
+</html>
+
