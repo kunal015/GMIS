@@ -155,29 +155,27 @@ body {
 <div class="live-topbar">
   <span class="dashpack-header-sm" style="font-size:30px;cursor:pointer;margin-bottom:20px;text-decoration:none;background-image: linear-gradient(135deg, #667eea 0, #764ba2 100%);"
     onclick="openNav()"><b>&#9776;</b></span>
-    <a class="dashpack-header-sm ml-auto" href="profile" title="" ><img src="https://lifevitae.co/assets/img/logo.svg" style="height:30px;" alt="image">
+    <a class="dashpack-header-sm ml-auto" href="{{route('profile')}}" title="" ><img src="https://lifevitae.co/assets/img/logo.svg" style="height:30px;" alt="image">
     </a>
   <div class="theme-options theme-options-vis ml-auto">
-    <a class="btn btn-warning" href="profile" data-toggle="tooltip" title="" data-original-title="View Details">HOME
-        <i class="fa fa-home fa-lg"></i>
+    <a class="btn btn-warning" href="profile" data-toggle="tooltip" title="" data-original-title="View Details"><i class="fa fa-home fa-lg"></i> HOME
     </a>
-    <a class="btn btn-warning" href="logout" data-toggle="tooltip" title="" data-original-title="View Details">LOGOUT
-        <i class="fa fa-sign-out-alt fa-lg"></i>
+    <a class="btn btn-warning" href="{{route('logout')}}" data-toggle="tooltip" title="" data-original-title="View Details"><i class="fa fa-sign-out-alt fa-lg"></i> LOGOUT
     </a>
   </div>
 </div>
 <br/><br/><br/>
     <div id="mySidenav" class="sidenav">
                 <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</span>
-                <a href={{"profile"}} class="sidenav-link text-muted"><i class="fas fa-home fa-fw"></i> Home </a>
+                <a href="{{route('profile')}}" class="sidenav-link text-muted"><i class="fas fa-home fa-fw"></i> Home </a>
                 @foreach($permission as $singlepermission)
-                    @if($singlepermission->name==="user_read")<a href={{"list"}} id="list" class="sidenav-link text-muted"><i class="fa fa-list fa-lg"></i> List All Existing Users </a>@endif
-                    @if($singlepermission->name==="user_create")<a href={{"register"}}  class="sidenav-link text-muted"><i class="fa fa-user fa-lg"></i> Create A New User </a>@endif
-                    @if($singlepermission->name=="role_permission_update")<a href={{"permission"}} id="permission" class="sidenav-link text-muted">Roles and Permission </a>@endif
-                    @if($singlepermission->name=="permission_read")<a href={{"addpermission"}} id="addpermission" class="sidenav-link text-muted"> Add or Delete Permissions </a>@endif
-                    @if($singlepermission->name=="role_read")<a href={{"addrole"}} id="addrole" class="sidenav-link text-muted">Add or Delete Roles</a>@endif
+                    @if($singlepermission->name==="user_read")<a href="{{route('list')}}" id="list" class="sidenav-link text-muted"><i class="fa fa-list fa-lg"></i> List All Existing Users </a>@endif
+                    @if($singlepermission->name==="user_create")<a href="{{route('register')}}"  class="sidenav-link text-muted"><i class="fa fa-user fa-lg"></i> Create A New User </a>@endif
+                    @if($singlepermission->name=="role_permission_update")<a href="{{route('permission')}}" id="permission" class="sidenav-link text-muted">Roles and Permission </a>@endif
+                    @if($singlepermission->name=="permission_read")<a href="{{route('addpermission')}}" id="addpermission" class="sidenav-link text-muted"> Add or Delete Permissions </a>@endif
+                    @if($singlepermission->name=="role_read")<a href="{{route('addrole')}}" id="addrole" class="sidenav-link text-muted">Add or Delete Roles</a>@endif
                 @endforeach
-                <a href="logout" class="sidenav-link text-muted">Logout <i class="fa fa-sign-out-alt fa-lg"></i></a>
+                <a href="{{route('logout')}}" class="sidenav-link text-muted"><i class="fa fa-sign-out-alt fa-lg"></i> Logout </a>
     </div>
 <div id="page-container">
     <div id="contents" style="padding-top:60px;position:relative;">
@@ -217,15 +215,15 @@ function closeNav() {
             if (url == (this.href)) {
                 $(this).closest("a").addClass("active");
             }
-            else if(url.includes("http://127.0.0.1:8000/editpermission"))
+            else if(url.includes("editpermission"))
             {
                 $("#addpermission").closest("a").addClass("active");
             }
-            else if(url.includes("http://127.0.0.1:8000/editrole"))
+            else if(url.includes("editrole"))
             {
                 $("#addrole").closest("a").addClass("active");
             }
-            else if((url.includes("http://127.0.0.1:8000/edit")) && !(url.includes("http://127.0.0.1:8000/editrole")) && !(url.includes("http://127.0.0.1:8000/edipermission")) )
+            else if((url.includes("edit")) && !(url.includes("editrole")) && !(url.includes("editpermission")) )
             {
                 $("#list").closest("a").addClass("active");
             }

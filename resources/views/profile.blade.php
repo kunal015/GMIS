@@ -96,9 +96,9 @@
                         <td>{{$LoggedUserInfo->email}}</td>
                         <td>{{$LoggedUserInfo->role}}</td>
                         <td>{{$LoggedUserInfo->desc}}</td>
-                        <td><a href="logout">Logout</a></td>
+                        <td><a href={{route('logout')}} class="btn btn-secondary" style="color:white;"><i class="fa fa-sign-out-alt fa-lg"></i> Logout</a></td>
                         @foreach($permission as $singlepermission)
-                        @if($singlepermission->name==="user_read")<td><a href="list" class="btn btn-info" style="color:white;"><i class="fa fa-list fa-lg"></i> List </a> </td>@endif
+                        @if($singlepermission->name==="user_read")<td><a href="{{route('list')}}" class="btn btn-info" style="color:white;"><i class="fa fa-list fa-lg"></i> List </a> </td>@endif
                         @if($singlepermission->name==="user_update")<td><a href={{"edit/".$LoggedUserInfo['id']}} class="btn btn-primary"><i class="fa fa-user-edit fa-lg"></i> Update </a>  </td>@endif
                         @endforeach
                     </tr>

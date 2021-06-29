@@ -75,7 +75,7 @@ a {
 @section('content')
 <div class="container">
     <div class="form-group col-12 p-0">
-	    <form name="frm"  action="/editpermission" method="POST">
+	    <form name="frm"  action="{{route('updatepermission')}}" method="POST">
         @csrf
 	    <div class="container">
 		    <h1>Update Role</h1>

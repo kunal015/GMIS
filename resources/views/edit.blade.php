@@ -82,7 +82,7 @@ a {
                 </div>
                 @endif
             </div>
-	    <form name="frm"  action="/edit" method="POST">
+	    <form name="frm"  action="{{route('update')}}" method="POST">
         @csrf
 	    <div class="container">
 		    <h1>Register</h1>

@@ -77,7 +77,7 @@ a {
 @section('content')
 <div class="container">
     <div class="form-group col-12 p-0">
-	    <form name="frm"  action="/editrole" method="POST">
+	    <form name="frm"  action="{{route('updaterole')}}" method="POST">
         @csrf
 	    <div class="container">
 		    <h1>Update Role</h1>
@@ -91,6 +91,7 @@ a {
             <br><br>
             <p><input type="checkbox" required> By updating the Role you agree to our <a href="#">Terms & Privacy</a>.Please click on the checkbox if you agree</p>
             <Button class="btn btn-success" style="width:80px;" type="submit">Update</Button>
+            <Button type="reset" class="btn btn-default pull-right">Cancel</Button>
         </div>
         </form>
   </div>
