@@ -174,6 +174,7 @@ body {
                     @if($singlepermission->name=="role_permission_update")<a href="{{route('permission')}}" id="permission" class="sidenav-link text-muted">Roles and Permission </a>@endif
                     @if($singlepermission->name=="permission_read")<a href="{{route('addpermission')}}" id="addpermission" class="sidenav-link text-muted"> Add or Delete Permissions </a>@endif
                     @if($singlepermission->name=="role_read")<a href="{{route('addrole')}}" id="addrole" class="sidenav-link text-muted">Add or Delete Roles</a>@endif
+                    @if($singlepermission->name=="add_student")<a href="{{route('addstudent')}}" id="addstudent" class="sidenav-link text-muted">Add Students</a>@endif
                 @endforeach
                 <a href="{{route('logout')}}" class="sidenav-link text-muted"><i class="fa fa-sign-out-alt fa-lg"></i> Logout </a>
     </div>

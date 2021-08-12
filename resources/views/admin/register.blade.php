@@ -126,7 +126,7 @@ a {
             @endforeach
             <br><br>
             <label for="Description"><b>Description</b></label><br>
-            <textarea rows = "5" cols = "50" name = "desc" placeholder="Type Your Desription"></textarea>
+            <textarea rows = "5" cols = "50" name = "desc" placeholder="Type Your Desription" style="resize:none;"></textarea>
             <hr>
             <Button class="btn btn-success" onclick="val()" style="width:80px;">Register</Button>
         </div>

@@ -4,9 +4,14 @@ use App\Models\Student;
 use App\Models\Roles;
 use App\Models\Roles_Permission;
 use App\Models\Permission;
+use App\Models\user_details;
+use App\Models\user_school;
+use App\Models\users;
+use App\Models\schools;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Validator;
+use Illuminate\Support\Facades\DB;
 
 class StudentController extends Controller
 {
@@ -18,17 +23,15 @@ class StudentController extends Controller
     public function __construct()
     {
         $this->middleware('revalidate');
-        //$this->middleware('auth');
     }
-
     public function login()
     {
         if(session()->has('LoggedUser')){
-            return redirect('profile');
+            return redirect('admin/profile');
         }
         else
         {
-            return view('login');
+            return view('admin/login');
         }
     }
     public function adminlogin()
@@ -43,7 +46,15 @@ class StudentController extends Controller
         if(session()->has('LoggedUser')){
             session()->pull('LoggedUser');
             session()->flush();
-            return redirect('login');
+            return redirect('admin/login');
+        }
+    }
+    public function studentlogout()
+    {
+        if(session()->has('LoggedUser')){
+            session()->pull('LoggedUser');
+            session()->flush();
+            return redirect('student/login');
         }
     }
     public function admindashboard()
@@ -97,7 +108,7 @@ class StudentController extends Controller
                      $permission1[]=Permission::where('id','=',$permissions->permission_id)->first();
                 }
                 $data=Roles::all();
-                return view('register',[
+                return view('admin/register',[
                     'roles'=>$data,
                     'permission'=>$permission1,
                 ]);
@@ -105,7 +116,7 @@ class StudentController extends Controller
         }
         else{
             $data=Roles::all();
-            return view('register',['roles'=>$data]);
+            return view('admin/register',['roles'=>$data]);
         }
     }
     public function check(Request $request)
@@ -118,7 +129,7 @@ class StudentController extends Controller
         if($user){
             if(Hash::check($request->password,$user->password)){
                 $request->session()->put('LoggedUser',$user->id);
-                return redirect('profile');
+                return redirect('admin/profile');
             }
             else{
                 return back()->with('fail','Invalid Password');
@@ -127,6 +138,111 @@ class StudentController extends Controller
         }
         else{
             return back()->with('fail','No account found for this email.');
+        }
+    }
+    public function studentregister()
+    {
+        return view('student/register');
+    }
+    public function studentlogin()
+    {
+        return view('student/login');
+    }
+    public function passwordset()
+    {
+        if(session()->has('LoggedUser')){
+            $user=users::where('id','=',session('LoggedUser'))->first();
+            return view('student/passwordset',
+            [
+                "user"=>$user
+            ]);
+        }
+        else
+        {
+            return redirect('student/register');
+        }
+    }
+    public function studentcheck(Request $request)
+    {
+        $request->validate([
+            'email'=>'required',
+            'password'=>'required',
+        ]);
+        $user=users::where('email','=',$request->email)->first();
+        if($user){
+            if(Hash::check($request->password,$user->password)){
+                $request->session()->put('LoggedUser',$user->id);
+                return redirect('student/profile');
+            }
+            else{
+                return back()->with('fail','Invalid Password');
+            }
+
+        }
+        else{
+            return back()->with('fail','No account found for this email.');
+        }
+    }
+    public function registercheck(Request $request)
+    {
+        $request->validate([
+            'email'=>'required',
+            'studid'=>'required',
+        ]);
+        $user=users::where('email','=',$request->email)->first();
+        if($user){
+            if($request->studid===$user->school_id){
+                $request->session()->put('LoggedUser',$user->id);
+                return view('student/passwordset',
+                [
+                   "user"=>$user
+                ]);
+            }
+            else{
+                return back()->with('fail','Invalid Student ID');
+            }
+
+        }
+        else{
+            return back()->with('fail','No account found for this email.');
+        }
+    }
+    public function createpassword(Request $request)
+    {
+        $data=users::find($request->id);
+        $request->validate([
+            'password'=>'required|min:6',
+            'repeatpassword'=>'required|min:6',
+        ]);
+        if(session()->has('LoggedUser')){
+            if($request->password===$request->repeatpassword)
+            {
+               $data->password=Hash::make($request->password);
+               $data->save();
+               return redirect('student/login')->with('success','Password Set Succesfully');
+            }
+            else
+            {
+                return back()->with('fail','Error in Repeating Password');
+            }
+        }
+        else
+        {
+            return back()->with('fail','Error in Repeating Password');
+        }
+    }
+    public function studentprofile()
+    {
+        if(session()->has('LoggedUser')){
+            $user=users::where('id','=',session('LoggedUser'))->first();
+            return view('student/profile',
+            [
+                "LoggedUserInfo"=>$user,
+            ]);
+        }
+        else
+        {
+            return redirect('student/login');
         }
     }
     public function profile()
@@ -140,7 +256,7 @@ class StudentController extends Controller
             {
                 $permission[]=Permission::where('id','=',$permissions->permission_id)->first();
             }
-            return view('profile',
+            return view('admin/profile',
             [
                 "LoggedUserInfo"=>$user,
                 "permission"=>$permission,
@@ -148,7 +264,7 @@ class StudentController extends Controller
         }
         else
         {
-            return redirect('login');
+            return redirect('admin/login');
         }
     }
     public function delete($id)
@@ -178,18 +294,18 @@ class StudentController extends Controller
                 }
                 if($flag==0)
                 {
-                    return redirect('list')->with('fail','You Do Not Have Permission To Delete This user');
+                    return redirect('admin/list')->with('fail','You Do Not Have Permission To Delete This user');
                 }
                 else
                 {
-                    return redirect('list')->with('success','User Deleted Successfully');
+                    return redirect('admin/list')->with('success','User Deleted Successfully');
                 }
             }
         }
         else{
             $data=Student::find($id);
             $data->delete();
-            return redirect('list')->with('success','User Deleted Successfully');
+            return redirect('admin/list')->with('success','User Deleted Successfully');
         }
     }
     public function deleterole($id)
@@ -223,7 +339,7 @@ class StudentController extends Controller
                 else
                 {
                     $data1->delete();
-                    return redirect('addrole')->with('success','Role Deleted Successfully');
+                    return redirect('admin/addrole')->with('success','Role Deleted Successfully');
                 }
             }
         }
@@ -237,7 +353,7 @@ class StudentController extends Controller
             else
             {
                 $data->delete();
-                 return redirect('addrole')->with('success','Role Deleted Successfully');
+                 return redirect('admin/addrole')->with('success','Role Deleted Successfully');
             }
         }
     }
@@ -272,7 +388,7 @@ class StudentController extends Controller
                 else
                 {
                     $data1->delete();
-                    return redirect('addpermission')->with('success','Permission Deleted Successfully');
+                    return redirect('admin/addpermission')->with('success','Permission Deleted Successfully');
                 }
             }
         }
@@ -286,7 +402,7 @@ class StudentController extends Controller
             else
             {
                 $data->delete();
-                return redirect('addpermission')->with('success','Permission Deleted Successfully');
+                return redirect('admin/addpermission')->with('success','Permission Deleted Successfully');
             }
         }
     }
@@ -308,7 +424,7 @@ class StudentController extends Controller
             }
             if($flag==0)
             {
-                return redirect('profile')->with('fail','You Do Not Have Permission To View the details of other users');
+                return redirect('admin/profile')->with('fail','You Do Not Have Permission To View the details of other users');
             }
             else
             {
@@ -318,7 +434,7 @@ class StudentController extends Controller
                 {
                     $permission1[]=Permission::where('id','=',$permissions->permission_id)->first();
                 }
-                return view('list',
+                return view('admin/list',
                 [
                     "members"=>$data1,
                     "permission"=>$permission1,
@@ -328,7 +444,7 @@ class StudentController extends Controller
         }
         else{
             $data=Student::all();
-            return view('list',['members'=>$data]);
+            return view('admin/list',['members'=>$data]);
         }
         //$data=Student::all();
         //return view('list',['members'=>$data]);
@@ -361,7 +477,7 @@ class StudentController extends Controller
                     $permission1[]=Permission::where('id','=',$permissions->permission_id)->first();
                 }
                 $data=Permission::all();
-                return view('addpermission',[
+                return view('admin/addpermission',[
                 'permissions'=>$data,
                 'permission'=>$permission1,
                 ]);
@@ -369,7 +485,7 @@ class StudentController extends Controller
         }
         else{
                 $data=Permission::all();
-                return view('addpermission',['permissions'=>$data]);
+                return view('admin/addpermission',['permissions'=>$data]);
         }
     }
     public function addrole()
@@ -400,7 +516,7 @@ class StudentController extends Controller
                     $permission1[]=Permission::where('id','=',$permissions->permission_id)->first();
                 }
                 $data=Roles::all();
-                return view('addrole',[
+                return view('admin/addrole',[
                 'roles'=>$data,
                 'permission'=>$permission1,
                 ]);
@@ -408,7 +524,7 @@ class StudentController extends Controller
         }
         else{
             $data=Roles::all();
-            return view('addrole',['roles'=>$data]);
+            return view('admin/addrole',['roles'=>$data]);
         }
     }
     public function permission()
@@ -441,7 +557,7 @@ class StudentController extends Controller
                 $data=Roles::all();
                 $data1=Permission::all();
                 $data2=Roles_Permission::all();
-                return view('permission',
+                return view('admin/permission',
                 [
                      'roles'=>$data,
                      'roles_permissions'=>$data2,
@@ -455,7 +571,7 @@ class StudentController extends Controller
             $data=Roles::all();
             $data1=Permission::all();
             $data2=Roles_Permission::all();
-            return view('permission',
+            return view('admin/permission',
             [
                 'roles'=>$data,
                 'roles_permissions'=>$data2,
@@ -683,7 +799,7 @@ class StudentController extends Controller
                 }
                 $data=Student::find($id);
                 $data1=Roles::all();
-                return view('edit',
+                return view('admin/edit',
                 [
                     "data"=>$data,
                     "roles"=>$data1,
@@ -694,7 +810,7 @@ class StudentController extends Controller
         else{
             $data=Student::find($id);
             $data1=Roles::all();
-            return view('edit',['data'=>$data],['roles'=>$data1]);
+            return view('admin/edit',['data'=>$data],['roles'=>$data1]);
         }
     }
     public function showroledata($id)
@@ -725,7 +841,7 @@ class StudentController extends Controller
                     $permission1[]=Permission::where('id','=',$permissions->permission_id)->first();
                 }
                 $data=Roles::find($id);
-                return view('editrole',
+                return view('admin/editrole',
                 [
                     "data"=>$data,
                     "permission"=>$permission1,
@@ -735,7 +851,7 @@ class StudentController extends Controller
         else
         {
             $data=Roles::find($id);
-            return view('editrole',['data'=>$data]);
+            return view('admin/editrole',['data'=>$data]);
         }
     }
     public function showpermissiondata($id)
@@ -766,7 +882,7 @@ class StudentController extends Controller
                     $permission1[]=Permission::where('id','=',$permissions->permission_id)->first();
                 }
                 $data=Permission::find($id);
-                return view('editpermission',
+                return view('admin/editpermission',
                 [
                     "data"=>$data,
                     "permission"=>$permission1,
@@ -776,7 +892,7 @@ class StudentController extends Controller
         else
         {
             $data=Permission::find($id);
-            return view('editpermission',['data'=>$data]);
+            return view('admin/editpermission',['data'=>$data]);
         }
     }
     public function update(Request $req)
@@ -948,8 +1064,154 @@ class StudentController extends Controller
      * @param  \App\Models\Student  $student
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Student $student)
+    public function addstudent()
     {
-
+        if(session()->has('LoggedUser')){
+            $data2=Student::where('id','=',session('LoggedUser'))->first();
+            $role=Roles::where('name','=',$data2->role)->first();
+            $user=Roles_Permission::where('role_id','=',$role->id)->get();
+            $target=Permission::where('name','=','add_student')->first();
+            $flag=0;
+            foreach($user as $permission)
+            {
+                if($permission->permission_id==$target->id)
+                {
+                    $flag=1;
+                    break;
+                }
+            }
+            if($flag==0)
+            {
+                return back()->with('fail','You do not have the permission to add students to the list');
+            }
+            else
+            {
+                $permission1=array();
+                foreach($user as $permissions)
+                {
+                    $permission1[]=Permission::where('id','=',$permissions->permission_id)->first();
+                }
+                return view('admin/addstudent',
+                [
+                    "permission"=>$permission1,
+                ]);
+            }
+        }
+        else
+        {
+            $data=Permission::find($id);
+            return view('admin/addstudent');
+        }
     }
+    public function generate() {
+        $length = 64;
+        $characters = '0123456789';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
+    }
+    public function uploadfile(Request $request){
+
+        if ($request->input('submit') != null ){
+
+          $file = $request->file('file');
+
+          // File Details
+          $filename = $file->getClientOriginalName();
+          $extension = $file->getClientOriginalExtension();
+          $tempPath = $file->getRealPath();
+          $fileSize = $file->getSize();
+          $mimeType = $file->getMimeType();
+
+          // Valid File Extensions
+          $valid_extension = array("csv");
+
+          // 2MB in Bytes
+          $maxFileSize = 2097152;
+
+          // Check file extension
+          if(in_array(strtolower($extension),$valid_extension)){
+              // File upload location
+              $location = 'uploads';
+
+              // Upload file
+              $file->move($location,$filename);
+
+              // Import CSV to Database
+              $filepath = public_path($location."/".$filename);
+
+              // Reading file
+              $file = fopen($filepath,"r");
+
+              $importData_arr = array();
+              $i = 0;
+
+              while (($filedata = fgetcsv($file, 1000, ",")) !== FALSE) {
+                 $num = count($filedata );
+
+                 // Skip first row (Remove below comment if you want to skip the first row)
+                 if($i == 0){
+                    $i++;
+                    continue;
+                 }
+                 for ($c=0; $c < $num; $c++) {
+                    $importData_arr[$i][] = $filedata [$c];
+                 }
+                 $i++;
+              }
+              fclose($file);
+              $data3=new schools;
+              $data3->name=$request->school;
+              $data3->save();
+              // Insert to MySQL database
+              foreach($importData_arr as $importData){
+
+                $insertData = array(
+                   "dob"=>$importData[3],
+                   "gender"=>$importData[4],
+                   "language_spokens"=>$importData[6],
+                   "comunication_address"=>$importData[5],
+                   "email"=>$importData[10],
+                   "school_id"=>$importData[2],
+                   "full_name"=>$importData[1],
+                   "standard"=>$importData[9],
+                   "stream"=>$importData[7],
+                   "is_school"=>$data3->id
+                );
+                $data=new users;
+                $data->full_name=$insertData['full_name'];
+                $data->email=$insertData['email'];
+                $data->school_id=$insertData['school_id'];
+                $random=$this->generate();
+                $data->secure_key=$random;
+                $data->is_school=$insertData['is_school'];
+                $query=$data->save();
+                $data1=new user_details;
+                $data1->user_id=$data->id;
+                $data1->dob=$insertData['dob'];
+                $data1->gender=$insertData['gender'];
+                $data1->language_spokens=$insertData['language_spokens'];
+                $data1->comunication_address=$insertData['comunication_address'];
+                $query=$data1->save();
+                DB::table('user_school')->insert([
+                    'school_name' =>$data3->name ,
+                    'stream' => $insertData['stream'],
+                    'standard'=>$insertData['standard'],
+                    'user_id'=> $data->id,
+                    'school_id'=>$data3->id
+                ]);
+                //dd($insertData);
+              }
+              return back()->with('success','data added successfully');
+          }else{
+            return back()->with('fail','unable to add data');
+          }
+
+        }
+        // Redirect to index
+        return back()->with('fail','unable to add data');
+      }
 }
