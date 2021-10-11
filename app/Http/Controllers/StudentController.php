@@ -8,10 +8,17 @@ use App\Models\user_details;
 use App\Models\user_school;
 use App\Models\users;
 use App\Models\schools;
+use App\Models\user_achievements;
+use App\Models\categories;
+use App\Models\answers;
+use App\Models\user_life_strengths;
+use App\Models\life_strength;
+use App\Models\user_life_event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
@@ -234,10 +241,22 @@ class StudentController extends Controller
     public function studentprofile()
     {
         if(session()->has('LoggedUser')){
-            $user=users::where('id','=',session('LoggedUser'))->first();
+            $data1=users::where('id','=',session('LoggedUser'))->first();
+            $data2=user_achievements::where('user_id','=',$data1->id)->get();
+            $data3=answers::where('user_id','=',$data1->id)->get();
+            $data4=user_life_strengths::where('user_id','=',$data1->id)->get();
+            $data5=life_strength::all();
+            $data6=categories::all();
+            $data7=user_life_event::where('user_id','=',$data1->id)->get();
             return view('student/profile',
             [
-                "LoggedUserInfo"=>$user,
+                "LoggedUserInfo"=>$data1,
+                "Achievement"=>$data2,
+                "Answers"=>$data3,
+                "Strengths"=>$data4,
+                "Strengthslist"=>$data5,
+                "Categories"=>$data6,
+                "Lifeline"=>$data7
             ]);
         }
         else
@@ -895,6 +914,18 @@ class StudentController extends Controller
             return view('admin/editpermission',['data'=>$data]);
         }
     }
+    public function showstudentdata()
+    {
+        if(session()->has('LoggedUser')){
+                $data=users::where('id','=',session('LoggedUser'))->first();
+                $data2=user_details::where('user_id','=',$data->id)->first();
+                return view('student/edit',
+                [
+                    "data"=>$data,
+                    "data2"=>$data2
+                ]);
+        }
+    }
     public function update(Request $req)
     {
         $data=Student::find($req->id);
@@ -1057,7 +1088,19 @@ class StudentController extends Controller
             return back()->with('success','Permission Updated Successfully');
         }
     }
-
+    public function updatestudent(Request $req)
+    {
+        if(session()->has('LoggedUser')){
+            $data=users::where('id','=',session('LoggedUser'))->first();
+            $data2=user_details::where('user_id','=',$data->id)->first();
+            $data->full_name=$req->full_name;
+            $data2->gender=$req->gender;
+            $data2->dob=$req->dob;
+            $data->save();
+            $data2->save();
+            return back()->with('success','User Updated Successfully');
+        }
+    }
     /**
      * Remove the specified resource from storage.
      *
@@ -1113,7 +1156,8 @@ class StudentController extends Controller
         }
         return $randomString;
     }
-    public function uploadfile(Request $request){
+    public function uploadfile(Request $request)
+    {
 
         if ($request->input('submit') != null ){
 
@@ -1203,7 +1247,6 @@ class StudentController extends Controller
                     'user_id'=> $data->id,
                     'school_id'=>$data3->id
                 ]);
-                //dd($insertData);
               }
               return back()->with('success','data added successfully');
           }else{
@@ -1211,7 +1254,543 @@ class StudentController extends Controller
           }
 
         }
-        // Redirect to index
         return back()->with('fail','unable to add data');
-      }
+    }
+    public function addachievement(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $validator = Validator::make($request->all(),[
+                'professional_title' => 'required',
+                'professional_category' => 'required',
+                'professional_detail' => 'required',
+                'standard' => 'required',
+                'professional_strength'=>'required',
+                'professional_tag'=> 'required'
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors();
+                $error_msg = "";
+                foreach($errors->all() as $error){
+                    if($error_msg == ""){
+                    $error_msg = $error;
+                    }
+                }
+                return response()->json(['status' => false,'error' => $error_msg]);
+            }
+            $user=new user_achievements;
+            $user->title=$request->professional_title;
+            $user->user_id=$user1->id;
+            $user->type=$request->professional_tag;
+            $user->details=$request->professional_detail;
+            $user->standard=$request->standard;
+            $user->strength=$request->professional_strength;
+            $user->media_type=$request->passion_media_type;
+            if($user->media_type=='link')
+            {
+                $user->media=$request->media_link;
+            }
+            $path='';
+            if ($request->hasFile('files')) {
+                $extension = $request->file('files')->extension();
+                $imageSize = $request->file('files')->getSize();
+                if($extension=='jpg'||$extension=='jpeg'||$extension=='png'||$extension=='mp3'||$extension=='mp4'||$extension=='wav'||$extension=='mov'||$extension=='avi')
+                {
+                    if($imageSize<=5000000)
+                    {
+                        $file = $request->file('files');
+                        $imageName = $file->getClientOriginalName();
+                        $url='public/img';
+                        $path = $file->storeAs($url,$imageName);
+                        $user->media= $imageName;
+                        $user->photo_type=$extension;
+                    }
+                }
+            }
+            $user->category_id=$request->professional_category;
+            $query=$user->save();
+            if($request->add_lifeline==1)
+            {
+                $user2=new user_life_event;
+                $user2->user_id=$user1->id;
+                $user2->life_event=$request->professional_title;
+                $user2->standard=$request->standard;
+                $user2->achievement_id=$user->id;
+                $query1=$user2->save();
+            }
+            $userlifeachievement=user_achievements::where('user_id','=',$user1->id)->get();
+            $userlifestrength=life_strength::all();
+            $data6=categories::all();
+            $htmltext= (string)View('student/LifeAchievementhtml',
+            [
+                'Achievement'=>$userlifeachievement,
+                'Strengthslist'=>$userlifestrength,
+                'Categories'=>$data6
+            ]);
+            return response()->json(
+                [
+                    'success' => true,
+                    'htmltext' => $htmltext
+                ]
+            );
+            if($query)
+            {
+                return redirect('student/profile');
+            }
+       }
+    }
+    public function GetLifeAchievementhtml(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $userlifeevent=user_achievements::where('id','=',$request->id)->first();
+            if($userlifeevent->user_id==$user1->id)
+            {
+                $htmltext= (string)View('student/LifeAchievementEdit',['item'=>$userlifeevent]);
+                return response()->json(
+                    [
+                        'success'=> true,
+                        'htmltext'=>$htmltext
+                    ]
+                );
+            }
+            else
+            {
+                return response()->json(
+                    [
+                        'status'=> false,
+                        'error'=>'access denied'
+                    ]
+                );
+            }
+        }
+    }
+    public function updatelifeachievement(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $validator = Validator::make($request->all(),[
+                'professional_title' => 'required',
+                'professional_category' => 'required',
+                'professional_detail' => 'required',
+                'standard' => 'required',
+                'professional_strength'=>'required',
+                'professional_tag'=> 'required'
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors();
+                $error_msg = "";
+                foreach($errors->all() as $error){
+                    if($error_msg == ""){
+                    $error_msg = $error;
+                    }
+                }
+                return response()->json(['status' => false,'error' => $error_msg]);
+            }
+            $data=user_achievements::where('id','=',$request->id)->first();
+            $data->title=$request->professional_title;
+            $data->user_id=$user1->id;
+            $data->type=$request->professional_tag;
+            $data->details=$request->professional_detail;
+            $data->standard=$request->standard;
+            $data->strength=$request->professional_strength;
+            $data->media_type=$request->passion_media_type;
+            if($data->media_type=='link')
+            {
+                $data->media=$request->media_link;
+            }
+            $path='';
+            if ($request->hasFile('files')) {
+                $extension = $request->file('files')->extension();
+                $imageSize = $request->file('files')->getSize();
+                if($extension=='jpg'||$extension=='jpeg'||$extension=='png'||$extension=='mp3'||$extension=='mp4'||$extension=='wav'||$extension=='mov'||$extension=='avi')
+                {
+                    if($imageSize<=5000000)
+                    {
+                        $file = $request->file('files');
+                        $imageName = $file->getClientOriginalName();
+                        $url='public/img';
+                        $path = $file->storeAs($url,$imageName);
+                        $data->media= $imageName;
+                        $data->photo_type=$extension;
+                    }
+                }
+            }
+            $data->category_id=$request->professional_category;
+            $query=$data->save();
+            if($request->add_lifeline==1)
+            {
+                $user2=user_life_event::where('achievement_id','=',$request->id)->first();
+                $user2->user_id=$user1->id;
+                $user2->life_event=$request->professional_title;
+                $user2->standard=$request->standard;
+                $user2->achievement_id=$request->id;
+                $query1=$user2->save();
+            }
+            $userlifeachievement=user_achievements::where('user_id','=',$user1->id)->get();
+            $userlifestrength=life_strength::all();
+            $data6=categories::all();
+            $htmltext= (string)View('student/LifeAchievementhtml',
+            [
+                'Achievement'=>$userlifeachievement,
+                'Strengthslist'=>$userlifestrength,
+                'Categories'=>$data6
+            ]);
+            return response()->json(
+                [
+                    'success' => true,
+                    'htmltext' => $htmltext
+                ]
+            );
+        }
+    }
+    public function addpassion(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $validator = Validator::make($request->all(),[
+                'passion_title' => 'required',
+                'passion_description' => 'required',
+                'passion_category' => 'required',
+                'passion_strength'=>'required'
+            ]);
+            if ($validator->fails()){
+                $errors = $validator->errors();
+                $error_msg = "";
+                foreach($errors->all() as $error){
+                    if($error_msg == ""){
+                    $error_msg = $error;
+                    }
+                }
+                return response()->json(['status' => false,'error' => $error_msg]);
+            }
+            $user=new user_achievements;
+            $user->title=$request->passion_title;
+            $user->user_id=$user1->id;
+            $user->type=1;
+            $user->category_id= $request->passion_category;
+            $user->details=$request->passion_description;
+            $user->strength=$request->passion_strength;
+            $user->media_type=$request->passion_media_type;
+            if($user->media_type=='link')
+            {
+                $user->media=$request->media_link;
+            }
+            $path='';
+            if ($request->hasFile('files')) {
+                $extension = $request->file('files')->extension();
+                $imageSize = $request->file('files')->getSize();
+                if($extension=='jpg'||$extension=='jpeg'||$extension=='png'||$extension=='mp3'||$extension=='mp4'||$extension=='wav'||$extension=='mov'||$extension=='avi')
+                {
+                    if($imageSize<=5000000)
+                    {
+                        $file = $request->file('files');
+                        $imageName = $file->getClientOriginalName();
+                        $url='public/img';
+                        $path = $file->storeAs($url,$imageName);
+                        $user->media= $imageName;
+                        $user->photo_type=$extension;
+                    }
+                }
+            }
+            $user->category_id=$request->passion_category;
+            $query=$user->save();
+            $userlifepassion=user_achievements::where('user_id','=',$user1->id)->get();
+            $userlifestrength=life_strength::all();
+            $data6=categories::all();
+            $htmltext= (string)View('student/LifePassionhtml',
+            [
+                'Achievement'=>$userlifepassion,
+                'Strengthslist'=>$userlifestrength,
+                'Categories'=>$data6
+            ]);
+            return response()->json(
+                [
+                    'success' => true,
+                    'htmltext' => $htmltext
+                ]
+            );
+            if($query)
+            {
+                return redirect('student/profile');
+            }
+        }
+    }
+    public function GetLifePassionhtml(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $userlifeevent=user_achievements::where('id','=',$request->id)->first();
+            if($userlifeevent->user_id==$user1->id)
+            {
+                $htmltext= (string)View('student/LifePassionEdit',['item'=>$userlifeevent]);
+                return response()->json(
+                    [
+                        'success'=> true,
+                        'htmltext'=>$htmltext
+                    ]
+                );
+            }
+            else
+            {
+                return response()->json(
+                    [
+                        'status'=> false,
+                        'error'=>'access denied'
+                    ]
+                );
+            }
+        }
+    }
+    public function updatelifepassion(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $validator = Validator::make($request->all(),[
+                'passion_title' => 'required',
+                'passion_description' => 'required',
+                'passion_category' => 'required',
+                'passion_strength'=>'required'
+            ]);
+            if ($validator->fails()){
+                $errors = $validator->errors();
+                $error_msg = "";
+                foreach($errors->all() as $error){
+                    if($error_msg == ""){
+                    $error_msg = $error;
+                    }
+                }
+                return response()->json(['status' => false,'error' => $error_msg]);
+            }
+            $user=user_achievements::where('id','=',$request->id)->first();
+            $user->title=$request->passion_title;
+            $user->user_id=$user1->id;
+            $user->type=1;
+            $user->category_id= $request->passion_category;
+            $user->details=$request->passion_description;
+            $user->strength=$request->passion_strength;
+            $user->media_type=$request->passion_media_type;
+            if($user->media_type=='link')
+            {
+                $user->media=$request->media_link;
+            }
+            $path='';
+            if ($request->hasFile('files')) {
+                $extension = $request->file('files')->extension();
+                $imageSize = $request->file('files')->getSize();
+                if($extension=='jpg'||$extension=='jpeg'||$extension=='png'||$extension=='mp3'||$extension=='mp4'||$extension=='wav'||$extension=='mov'||$extension=='avi')
+                {
+                    if($imageSize<=5000000)
+                    {
+                        $file = $request->file('files');
+                        $imageName = $file->getClientOriginalName();
+                        $url='public/img';
+                        $path = $file->storeAs($url,$imageName);
+                        $user->media= $imageName;
+                        $user->photo_type=$extension;
+                    }
+                }
+            }
+            $user->category_id=$request->passion_category;
+            $query=$user->save();
+            $userlifepassion=user_achievements::where('user_id','=',$user1->id)->get();
+            $userlifestrength=life_strength::all();
+            $data6=categories::all();
+            $htmltext= (string)View('student/LifePassionhtml',
+            [
+                'Achievement'=>$userlifepassion,
+                'Strengthslist'=>$userlifestrength,
+                'Categories'=>$data6
+            ]);
+            return response()->json(
+                [
+                    'success' => true,
+                    'htmltext' => $htmltext
+                ]
+            );
+        }
+    }
+    public function addmoment(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            DB::table('answers')->where('user_id','=',$user1->id)->delete();
+            for ($x = 0; $x <= 19; $x++) {
+                if($request->answer[$x]!=null)
+                {
+                    $user=new answers;
+                    $user->user_id=$user1->id;
+                    $user->question_id=$request->question_id[$x];
+                    $user->answer=$request->answer[$x];
+                    $user->privacy=$request->privacy_public[$x+1];
+                    $query=$user->save();
+                }
+            }
+            return redirect('student/profile');
+        }
+    }
+    public function addstrength(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            DB::table('user_life_strengths')->where('user_id','=',$user1->id)->delete();
+            for($x=0;$x<sizeof($request->life_str);$x++)
+            {
+                $user=new user_life_strengths;
+                $user->user_id=$user1->id;
+                $user->strengths=$request->life_str[$x];
+                $query=$user->save();
+            }
+            return redirect('student/profile');
+        }
+    }
+    public function userRegistrationPost4(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user_id=users::where('id','=',session('LoggedUser'))->first();
+            $validator = Validator::make($request->all(),[
+                'life_event' => 'required|unique:user_life_event,life_event,NULL,id,user_id,'.$user_id,
+                'standard' => 'required',
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors();
+                $error_msg = "";
+                foreach($errors->all() as $error){
+                    if($error_msg == ""){
+                    $error_msg = $error;
+                    }
+                }
+                return response()->json(['status' => false,'error' => $error_msg]);
+            }
+            $e['user_id'] = $user_id;
+            $e['standard'] = $request['standard'];
+            $e['life_event'] = $request['life_event'];
+            //LifeEvent::create($e);
+            $html_text = $this->getLifelineDetails();
+            return response()->json(['status' => true,'success' => 'Success', 'htmltext' => $html_text]);
+        }
+    }
+    public function addlifeline(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $validator = Validator::make($request->all(),[
+                'life_event' => 'required|unique:user_life_event,life_event,NULL,id,user_id,'.$user1->id,
+                'standard' => 'required',
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors();
+                $error_msg = "";
+                foreach($errors->all() as $error){
+                    if($error_msg == ""){
+                    $error_msg = $error;
+                    }
+                }
+                return response()->json(['status' => false,'error' => $error_msg]);
+            }
+            $user2=new user_life_event;
+            $user2->user_id=$user1->id;
+            $user2->life_event=$request->life_event;
+            $user2->standard=$request->standard;
+            $query=$user2->save();
+            $userlifeevent=user_life_event::where('user_id','=',$user1->id)->get();
+            $htmltext= (string)View('student/LifeLinehtml',['Lifeline'=>$userlifeevent]);
+            return response()->json(
+                [
+                    'success' => true,
+                    'htmltext' => $htmltext
+                ]
+            );
+        }
+    }
+    public function GetLifeLinehtml(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $userlifeevent=user_life_event::where('id','=',$request->id)->first();
+            if($userlifeevent->user_id==$user1->id)
+            {
+                $htmltext= (string)View('student/LifeLineEdit',['Lifeline'=>$userlifeevent]);
+                return response()->json(
+                    [
+                        'success'=> true,
+                        'htmltext'=>$htmltext
+                    ]
+                );
+            }
+            else
+            {
+                return response()->json(
+                    [
+                        'status'=> false,
+                        'error'=>'access denied'
+                    ]
+                );
+            }
+        }
+    }
+    public function updatelifeline(Request $request)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $validator = Validator::make($request->all(),[
+                'life_event' => 'required|unique:user_life_event,life_event,NULL,id,user_id,'.$user1->id,
+                'standard' => 'required',
+            ]);
+            if ($validator->fails()) {
+                $errors = $validator->errors();
+                $error_msg = "";
+                foreach($errors->all() as $error){
+                    if($error_msg == ""){
+                    $error_msg = $error;
+                    }
+                }
+                return response()->json(['status' => false,'error' => $error_msg]);
+            }
+            $data=user_life_event::where('id','=',$request->life_event_id)->first();
+            $data->life_event=$request->life_event;
+            $data->standard=$request->standard;
+            $data->save();
+            $userlifeevent=user_life_event::where('user_id','=',$user1->id)->get();
+            $htmltext= (string)View('student/LifeLinehtml',['Lifeline'=>$userlifeevent]);
+            return response()->json(
+                [
+                    'success' => true,
+                    'htmltext' => $htmltext
+                ]
+            );
+        }
+    }
+    public function deleteachievement($id)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $user2=user_achievements::where('id','=',$id)->first();
+            $user2->delete();
+            $user3=user_life_event::where('achievement_id','=',$id)->first();
+            if($user3)
+            {
+                $user3->delete();
+            }
+            return redirect('student/profile');
+        }
+    }
+    public function deletepassion($id)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $user2=user_achievements::where('id','=',$id)->first();
+            $user2->delete();
+            return redirect('student/profile');
+        }
+    }
+    public function deletelifeline($id)
+    {
+        if(session()->has('LoggedUser')){
+            $user1=users::where('id','=',session('LoggedUser'))->first();
+            $user3=user_life_event::where('id','=',$id)->first();
+            $user3->delete();
+            return redirect('student/profile');
+        }
+    }
 }

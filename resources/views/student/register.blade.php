@@ -163,32 +163,32 @@ button:not(:disabled), [type="button"]:not(:disabled), [type="reset"]:not(:disab
         <img class="login-logo" src="https://lifevitae.co/assets/img/login-logo.svg">
     </div>
 </div>
-  <div class="container h-100">
-            <div class="row h-100 align-items-center justify-content-center text-center">
-                <div class="col-sm-6">
-                  <div class="row text-center">
+    <div class="container h-100">
+        <div class="row h-100 align-items-center justify-content-center text-center">
+            <div class="col-sm-6">
+                <div class="row text-center">
                     <div class="col-12 align-self-baseline">
-                                 <div style="margin: 20px 0;"> </div>
-                                    <h1 class="text-white text-center mt-3 mb-3">Student Registration</h1>
-                                      <form id="login" method="POST" class="login__form" action="{{route('registercheck')}}" novalidate="novalidate">
-                                        @csrf
-                                        <div class="form-group">
-                                            <label for="email">Email</label>
-                                              <input name="email" maxlength="255" autocomplete="on" type="email" placeholder="Enter Your Email" value="{{old ('email')}}" class="form-control valid" aria-invalid="false">
-                                              <span class="text-danger">@error('email') {{ $message }}@enderror</span>
-                                        </div>
-                                        <div class="form-group" style="position: relative;">
-                                          <label for="studid">Student ID</label>
-                                          <input type="text" name="studid" autocomplete="on" id="studid" class="form-control valid" aria-invalid="false" placeholder="Enter Your Student ID">
-                                          <span class="text-danger">@error('Student ID') {{ $message }}@enderror</span>
-                                        </div>
-                                        <button type="submit" class="mt-5 btn btn-green">
-                                          <span>Log In</span>
-                                        </button>
-                                      </form>
+                        <div style="margin: 20px 0;"> </div>
+                        <h1 class="text-white text-center mt-3 mb-3">Student Registration</h1>
+                        <form id="login" method="POST" class="login__form" action="{{route('registercheck')}}" novalidate="novalidate">
+                            @csrf
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                    <input name="email" maxlength="255" autocomplete="on" type="email" placeholder="Enter Your Email" value="{{old ('email')}}" class="form-control valid" aria-invalid="false" required>
+                                    <span class="text-danger">@error('email') {{ $message }}@enderror</span>
+                            </div>
+                            <div class="form-group" style="position: relative;">
+                                <label for="studid">Student ID</label>
+                                <input type="text" name="studid" autocomplete="on" id="studid" class="form-control valid" aria-invalid="false" placeholder="Enter Your Student ID" required>
+                                <span class="text-danger">@error('Student ID') {{ $message }}@enderror</span>
+                            </div>
+                            <button type="submit" class="mt-5 btn btn-green">
+                                <span>Log In</span>
+                            </button>
+                        </form>
                     </div>
-                  </div>
                 </div>
-              </div>
-  </div>
+            </div>
+        </div>
+    </div>
 </body>
